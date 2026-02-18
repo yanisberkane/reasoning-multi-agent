@@ -2,6 +2,8 @@ import { createThinkerStream } from "@/agents/thinker";
 import { retrieveUserProfile, processPostInteraction } from "@/memory/manager";
 import { storeInteraction } from "@/db/memory";
 import { createTraceCollector } from "@/lib/tracing";
+import { convertToModelMessages } from "ai";
+import type { UIMessage } from "ai";
 import type { Interaction } from "@/db/types";
 
 export const maxDuration = 60;
@@ -9,21 +11,16 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const messages = (body.messages ?? []).map(
-    (m: { role: string; content?: string; parts?: { type: string; text?: string }[] }) => ({
-      role: m.role as "user" | "assistant",
-      content:
-        m.content ??
-        (m.parts
-          ?.filter((p: { type: string }) => p.type === "text")
-          .map((p: { text?: string }) => p.text)
-          .join("") || ""),
-    })
-  );
+  const rawMessages: UIMessage[] = body.messages ?? [];
+  const messages = await convertToModelMessages(rawMessages);
 
   const userId: string = body.userId ?? "default-user";
-  const lastUserMessage =
-    messages.filter((m: { role: string }) => m.role === "user").pop()?.content ?? "";
+  const lastUserMessage = rawMessages
+    .filter((m) => m.role === "user")
+    .pop()
+    ?.parts?.filter((p) => p.type === "text")
+    .map((p) => (p as { type: "text"; text: string }).text)
+    .join("") ?? "";
 
   const userProfile = await retrieveUserProfile(userId, lastUserMessage);
   const traceCollector = createTraceCollector();

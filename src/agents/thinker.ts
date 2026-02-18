@@ -1,4 +1,5 @@
 import { streamText, tool, stepCountIs } from "ai";
+import type { ModelMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { searchLeads, formatLeadForDisplay, formatLeadSummary } from "./lead-agent";
@@ -99,7 +100,7 @@ const writeFollowUpInputSchema = z.object({
 });
 
 export function createThinkerStream(
-  messages: { role: "user" | "assistant"; content: string }[],
+  messages: ModelMessage[],
   userId: string,
   userProfile: AggregatedUserProfile,
   traceCollector: TraceCollector
