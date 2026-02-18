@@ -1,5 +1,10 @@
 import type { ThinkingStep, ToolCallRecord } from "@/db/types";
 
+/**
+ * Accumulates thinking steps and tool calls during a Thinker agent run.
+ * Used to build the full reasoning trace that gets stored in the
+ * `interactions` collection and displayed in the UI.
+ */
 export interface TraceCollector {
   thinkingSteps: ThinkingStep[];
   toolCalls: ToolCallRecord[];
@@ -8,6 +13,10 @@ export interface TraceCollector {
   getTrace(): { thinkingSteps: ThinkingStep[]; toolCalls: ToolCallRecord[] };
 }
 
+/**
+ * Creates a new trace collector that logs each step to the console
+ * with structured prefixes ([THINK], [PLAN], [TOOL], etc.).
+ */
 export function createTraceCollector(): TraceCollector {
   const thinkingSteps: ThinkingStep[] = [];
   const toolCalls: ToolCallRecord[] = [];
@@ -33,6 +42,7 @@ export function createTraceCollector(): TraceCollector {
   };
 }
 
+/** Typed annotation sent to the client via stream for real-time tracing display. */
 export interface StreamAnnotation {
   type: "thinking" | "tool_call" | "tool_result" | "memory_update";
   data: Record<string, unknown>;

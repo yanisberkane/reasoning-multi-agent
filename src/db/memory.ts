@@ -4,6 +4,7 @@ import type { MemoryEntry, Interaction } from "./types";
 const MEMORIES_COLLECTION = "memories";
 const INTERACTIONS_COLLECTION = "interactions";
 
+/** Bulk-insert memory entries. No-op if the array is empty. */
 export async function storeMemoryEntries(entries: MemoryEntry[]): Promise<void> {
   if (entries.length === 0) return;
   const db = await getDb();
@@ -11,6 +12,11 @@ export async function storeMemoryEntries(entries: MemoryEntry[]): Promise<void> 
   await collection.insertMany(entries);
 }
 
+/**
+ * Retrieve memories semantically relevant to the current context.
+ * Uses Atlas Vector Search with a userId pre-filter so each user only
+ * sees their own memories. Falls back to recency-based retrieval on error.
+ */
 export async function searchMemoriesByVector(
   userId: string,
   embedding: number[],
@@ -53,6 +59,7 @@ export async function searchMemoriesByVector(
   }
 }
 
+/** Get a user's most recent memories, sorted newest first. */
 export async function getMemoriesByUser(
   userId: string,
   limit: number = 50
@@ -67,18 +74,21 @@ export async function getMemoriesByUser(
     .toArray();
 }
 
+/** Count total memory entries for a user (used to detect first-time users). */
 export async function getMemoryCountByUser(userId: string): Promise<number> {
   const db = await getDb();
   const collection = db.collection<MemoryEntry>(MEMORIES_COLLECTION);
   return collection.countDocuments({ userId });
 }
 
+/** Persist a full interaction record including thinking trace and tool calls. */
 export async function storeInteraction(interaction: Interaction): Promise<void> {
   const db = await getDb();
   const collection = db.collection<Interaction>(INTERACTIONS_COLLECTION);
   await collection.insertOne(interaction);
 }
 
+/** Retrieve a user's recent interactions for context, newest first. */
 export async function getRecentInteractions(
   userId: string,
   limit: number = 5

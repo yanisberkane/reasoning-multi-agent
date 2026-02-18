@@ -3,6 +3,7 @@ import { openai } from "@ai-sdk/openai";
 
 const embeddingModel = openai.embedding("text-embedding-3-small");
 
+/** Generate a single 1536-dim embedding vector for a text string. */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const { embedding } = await embed({
     model: embeddingModel,
@@ -11,6 +12,10 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return embedding;
 }
 
+/**
+ * Generate embeddings for multiple texts, batched in groups of 100
+ * to stay within API rate limits.
+ */
 export async function generateEmbeddings(
   texts: string[]
 ): Promise<number[][]> {
@@ -29,6 +34,11 @@ export async function generateEmbeddings(
   return allEmbeddings;
 }
 
+/**
+ * Convert a lead's key fields into a single text string suitable for embedding.
+ * The resulting text captures name, role, company, industry, pipeline context,
+ * deal value, interests, and interaction notes.
+ */
 export function leadToEmbeddingText(lead: {
   name: string;
   company: string;

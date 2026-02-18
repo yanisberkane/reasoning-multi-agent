@@ -10,6 +10,12 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
+/**
+ * Returns a singleton MongoClient promise.
+ * In development, the client is cached on the global object to survive HMR.
+ * In production, a module-level variable is used instead.
+ * The connection is lazy -- no work is done until this function is called.
+ */
 function getClientPromise(): Promise<MongoClient> {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
@@ -31,6 +37,7 @@ function getClientPromise(): Promise<MongoClient> {
   return clientPromise;
 }
 
+/** Returns the `agentique` database handle from the singleton client. */
 export async function getDb(): Promise<Db> {
   const client = await getClientPromise();
   return client.db(DB_NAME);

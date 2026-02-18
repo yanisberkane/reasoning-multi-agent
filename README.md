@@ -2,6 +2,8 @@
 
 Système multi-agent en TypeScript avec raisonnement (Chain of Thought), routage intelligent et mémoire utilisateur progressive pour l'assistance commerciale.
 
+> **[Documentation technique detaillée (TECHNICAL.md)](TECHNICAL.md)** -- diagrammes d'architecture, flux de données, schémas de données, choix techniques.
+
 ## Architecture
 
 ```

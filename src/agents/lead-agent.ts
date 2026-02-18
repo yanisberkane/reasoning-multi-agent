@@ -4,10 +4,20 @@ import type { Lead } from "@/db/types";
 
 export interface LeadSearchResult {
   leads: Omit<Lead, "embedding">[];
+  /** Which search strategy produced these results */
   searchMethod: "vector" | "text" | "all";
   query: string;
 }
 
+/**
+ * Search for leads using a cascading fallback strategy:
+ * 1. Vector search (semantic similarity via embeddings)
+ * 2. Text search (regex across key fields)
+ * 3. Return first 5 leads (last resort)
+ *
+ * This ensures the agent always gets results even if vector search
+ * is misconfigured or the query doesn't match well.
+ */
 export async function searchLeads(query: string): Promise<LeadSearchResult> {
   try {
     const embedding = await generateEmbedding(query);
@@ -33,10 +43,12 @@ export async function searchLeads(query: string): Promise<LeadSearchResult> {
   return { leads: leads.slice(0, 5), searchMethod: "all", query };
 }
 
+/** Retrieve full lead profile by ObjectId. Delegates to the DB layer. */
 export async function getLeadDetails(leadId: string): Promise<Lead | null> {
   return getLeadById(leadId);
 }
 
+/** Format a lead's full profile as a multi-line markdown string for LLM consumption. */
 export function formatLeadForDisplay(lead: Lead): string {
   return [
     `**${lead.name}** - ${lead.role}`,
@@ -50,6 +62,7 @@ export function formatLeadForDisplay(lead: Lead): string {
   ].join("\n");
 }
 
+/** One-line summary of a lead for use in search result lists. */
 export function formatLeadSummary(lead: Lead): string {
   return `${lead.name} (${lead.role} @ ${lead.company}) - ${lead.pipeline_stage} - ${lead.deal_value.toLocaleString("fr-FR")}€`;
 }

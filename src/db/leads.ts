@@ -4,6 +4,11 @@ import type { Lead } from "./types";
 
 const COLLECTION = "leads";
 
+/**
+ * Semantic search over leads using MongoDB Atlas Vector Search.
+ * Requires the `leads_vector_index` to be configured on the cluster.
+ * On failure (index missing, network error), falls back to returning all leads.
+ */
 export async function searchLeadsByVector(
   embedding: number[],
   limit: number = 5
@@ -39,6 +44,10 @@ export async function searchLeadsByVector(
   }
 }
 
+/**
+ * Case-insensitive regex search across lead fields (name, company, industry,
+ * role, notes, interests). Used as a fallback when vector search is unavailable.
+ */
 export async function searchLeadsByText(query: string, limit: number = 5): Promise<Lead[]> {
   const db = await getDb();
   const collection = db.collection<Lead>(COLLECTION);
@@ -62,6 +71,7 @@ export async function searchLeadsByText(query: string, limit: number = 5): Promi
     .toArray();
 }
 
+/** Retrieve a single lead by its MongoDB ObjectId. Returns null if not found. */
 export async function getLeadById(id: string): Promise<Lead | null> {
   const db = await getDb();
   const collection = db.collection<Lead>(COLLECTION);
@@ -72,12 +82,14 @@ export async function getLeadById(id: string): Promise<Lead | null> {
   );
 }
 
+/** Return all leads in the database (without embedding vectors). */
 export async function getAllLeads(): Promise<Lead[]> {
   const db = await getDb();
   const collection = db.collection<Lead>(COLLECTION);
   return collection.find({}, { projection: { embedding: 0 } }).toArray();
 }
 
+/** Replace all leads in the database. Used by the seed script. */
 export async function insertLeads(leads: Lead[]): Promise<void> {
   const db = await getDb();
   const collection = db.collection<Lead>(COLLECTION);

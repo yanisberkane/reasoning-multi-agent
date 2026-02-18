@@ -37,6 +37,12 @@ Respond with a JSON array of objects with this structure:
   }
 ]`;
 
+/**
+ * Analyze a completed conversation turn and extract new observations about
+ * the user's communication preferences. Uses a dedicated LLM call with a
+ * specialized extraction prompt. The existing profile is passed in to avoid
+ * duplicating already-known observations.
+ */
 export async function extractMemories(
   userMessage: string,
   assistantMessage: string,
@@ -80,6 +86,7 @@ Extract observations as JSON array:`,
   }
 }
 
+/** Vectorize each extracted memory and persist them to MongoDB. */
 export async function storeExtractedMemories(
   userId: string,
   memories: ExtractedMemory[]
@@ -108,6 +115,15 @@ export async function storeExtractedMemories(
   await storeMemoryEntries(entries);
 }
 
+/**
+ * Build an aggregated user profile from stored memories.
+ * 
+ * Retrieves the most relevant memories via vector search (using the current
+ * message as query), groups them by category, and sorts within each category
+ * by: corrections first, then recency, then confidence score.
+ * 
+ * Returns an empty profile for first-time users (memoryCount === 0).
+ */
 export async function retrieveUserProfile(
   userId: string,
   currentMessage: string
@@ -178,6 +194,11 @@ export async function retrieveUserProfile(
   };
 }
 
+/**
+ * End-to-end post-interaction pipeline: retrieve existing profile,
+ * extract new observations, vectorize and store them.
+ * Called asynchronously after the response stream completes.
+ */
 export async function processPostInteraction(
   userId: string,
   userMessage: string,
